@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: SpringAI
+
+  ai:
+    openai:
+      api-key: ${OPEN_API_KEY}
+    chat:
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: never
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/SpringAI
+    username: root
+    password: aod37988##
+    driver-class-name: com.mysql.cj.jdbc.Driver

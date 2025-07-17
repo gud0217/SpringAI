@@ -1,5 +1,8 @@
 package com.example.springai.domain.openai.service;
 
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -15,9 +18,11 @@ import java.util.List;
 public class OpenAIService {
 
     private final OpenAiChatModel openAiChatModel;
+    private final ChatMemoryRepository chatMemoryRepository;
 
-    public OpenAIService(OpenAiChatModel openAiChatModel, OpenAiEmbeddingModel openAiEmbeddingModel, OpenAiImageModel openAiImageModel, OpenAiAudioSpeechModel openAiAudioSpeechModel, OpenAiAudioTranscriptionModel openAiAudioTranscriptionModel) {
+    public OpenAIService(OpenAiChatModel openAiChatModel, OpenAiEmbeddingModel openAiEmbeddingModel, OpenAiImageModel openAiImageModel, OpenAiAudioSpeechModel openAiAudioSpeechModel, OpenAiAudioTranscriptionModel openAiAudioTranscriptionModel, ChatMemoryRepository chatMemoryRepository) {
         this.openAiChatModel = openAiChatModel;
+        this.chatMemoryRepository = chatMemoryRepository;
     }
 
     // chatmodel : response
@@ -43,13 +48,22 @@ public class OpenAIService {
         return response.getResult().getOutput().getText();
     }
 
+
+
+
+
     // chatmodel : response stream
     public Flux<String> generateStream(String text) {
 
+        // 유저&페이지별 ChatMemory를 관리하기 위한 Key (우선 명시적)
+        String userId = "gud0217" + "_" + "1";
+
         // 메시지
-        SystemMessage systemMessage = new SystemMessage("");
-        UserMessage userMessage = new UserMessage(text);
-        AssistantMessage assistantMessage = new AssistantMessage("");
+        ChatMemory chatMemory = MessageWindowChatMemory.builder()
+                .maxMessages(10)
+                .chatMemoryRepository(chatMemoryRepository)
+                .build();
+        chatMemory.add(userId, new UserMessage(text)); // 신규 메시지 추가
 
         // 옵션
         OpenAiChatOptions options = OpenAiChatOptions.builder()
@@ -58,10 +72,21 @@ public class OpenAIService {
                 .build();
 
         // 프롬프트
-        Prompt prompt = new Prompt(List.of(systemMessage, userMessage, assistantMessage), options);
+        Prompt prompt = new Prompt(chatMemory.get(userId), options);
+
+        // 응답 메시지를 저장할 임시 버퍼
+        StringBuilder responseBuffer = new StringBuilder();
 
         // 요청 및 응답
         return openAiChatModel.stream(prompt)
-                .mapNotNull(response -> response.getResult().getOutput().getText());
+                .mapNotNull(response -> {
+                    String token = response.getResult().getOutput().getText();
+                    responseBuffer.append(token);
+                    return token;
+                })
+                .doOnComplete(() -> {
+                    chatMemory.add(userId, new AssistantMessage(responseBuffer.toString()));
+                    chatMemoryRepository.saveAll(userId, chatMemory.get(userId));
+                });
     }
 }
