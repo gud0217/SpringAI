@@ -1,5 +1,6 @@
 package com.example.springai.domain.openai.service;
 
+import com.example.springai.domain.openai.dto.CityResponseDTO;
 import com.example.springai.entity.ChatEntity;
 import com.example.springai.repository.ChatRepository;
 import org.springframework.ai.chat.client.ChatClient;
@@ -34,7 +35,9 @@ public class OpenAIService {
     }
 
     // chatmodel : response
-    public String generate(String text) {
+    public CityResponseDTO generate(String text) {
+
+        ChatClient chatClient = ChatClient.create(openAiChatModel);
 
         // 메시지
         SystemMessage systemMessage = new SystemMessage(""); // 시스템 동작 방식을 제어하는 지침. 예) 당신은 심리 상담사 입니다.
@@ -52,8 +55,9 @@ public class OpenAIService {
         Prompt prompt = new Prompt(List.of(systemMessage, userMessage, assistantMessage), options);
 
         // 요청 및 응답
-        ChatResponse response = openAiChatModel.call(prompt);
-        return response.getResult().getOutput().getText();
+        return chatClient.prompt(prompt)
+                .call()
+                .entity(CityResponseDTO.class);
     }
 
 
