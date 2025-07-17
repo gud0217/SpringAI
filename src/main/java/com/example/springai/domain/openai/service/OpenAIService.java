@@ -2,6 +2,7 @@ package com.example.springai.domain.openai.service;
 
 import com.example.springai.entity.ChatEntity;
 import com.example.springai.repository.ChatRepository;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
@@ -24,7 +25,9 @@ public class OpenAIService {
     private final ChatMemoryRepository chatMemoryRepository;
     private final ChatRepository chatRepository;
 
-    public OpenAIService(OpenAiChatModel openAiChatModel, OpenAiEmbeddingModel openAiEmbeddingModel, OpenAiImageModel openAiImageModel, OpenAiAudioSpeechModel openAiAudioSpeechModel, OpenAiAudioTranscriptionModel openAiAudioTranscriptionModel, ChatMemoryRepository chatMemoryRepository, ChatRepository chatRepository) {
+    public OpenAIService(OpenAiChatModel openAiChatModel,
+                         ChatMemoryRepository chatMemoryRepository,
+                         ChatRepository chatRepository) {
         this.openAiChatModel = openAiChatModel;
         this.chatMemoryRepository = chatMemoryRepository;
         this.chatRepository = chatRepository;
@@ -60,6 +63,8 @@ public class OpenAIService {
     // chatmodel : response stream
     public Flux<String> generateStream(String text) {
 
+        ChatClient chatClient = ChatClient.create(openAiChatModel);
+
         // 유저&페이지별 ChatMemory를 관리하기 위한 Key (우선 명시적)
         String userId = "gud0217" + "_" + "1";
 
@@ -89,14 +94,15 @@ public class OpenAIService {
         StringBuilder responseBuffer = new StringBuilder();
 
         // 요청 및 응답
-        return openAiChatModel.stream(prompt)
-                .mapNotNull(response -> {
-                    String token = response.getResult().getOutput().getText();
+        return chatClient.prompt(prompt)
+                .stream()
+                .content()
+                .map(token -> {
                     responseBuffer.append(token);
                     return token;
                 })
                 .doOnComplete(() -> {
-
+                    // chatMemory 저장
                     chatMemory.add(userId, new AssistantMessage(responseBuffer.toString()));
                     chatMemoryRepository.saveAll(userId, chatMemory.get(userId));
 
@@ -108,5 +114,26 @@ public class OpenAIService {
 
                     chatRepository.saveAll(List.of(chatUserEntity, chatAssistantEntity));
                 });
+
+
+//        return openAiChatModel.stream(prompt)
+//                .mapNotNull(response -> {
+//                    String token = response.getResult().getOutput().getText();
+//                    responseBuffer.append(token);
+//                    return token;
+//                })
+//                .doOnComplete(() -> {
+//
+//                    chatMemory.add(userId, new AssistantMessage(responseBuffer.toString()));
+//                    chatMemoryRepository.saveAll(userId, chatMemory.get(userId));
+//
+//                    // 전체 대화 저장용
+//                    ChatEntity chatAssistantEntity = new ChatEntity();
+//                    chatAssistantEntity.setUserId(userId);
+//                    chatAssistantEntity.setType(MessageType.ASSISTANT);
+//                    chatAssistantEntity.setContent(responseBuffer.toString());
+//
+//                    chatRepository.saveAll(List.of(chatUserEntity, chatAssistantEntity));
+//                });
     }
 }
