@@ -1,9 +1,12 @@
 package com.example.springai.domain.openai.service;
 
+import com.example.springai.entity.ChatEntity;
+import com.example.springai.repository.ChatRepository;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -19,10 +22,12 @@ public class OpenAIService {
 
     private final OpenAiChatModel openAiChatModel;
     private final ChatMemoryRepository chatMemoryRepository;
+    private final ChatRepository chatRepository;
 
-    public OpenAIService(OpenAiChatModel openAiChatModel, OpenAiEmbeddingModel openAiEmbeddingModel, OpenAiImageModel openAiImageModel, OpenAiAudioSpeechModel openAiAudioSpeechModel, OpenAiAudioTranscriptionModel openAiAudioTranscriptionModel, ChatMemoryRepository chatMemoryRepository) {
+    public OpenAIService(OpenAiChatModel openAiChatModel, OpenAiEmbeddingModel openAiEmbeddingModel, OpenAiImageModel openAiImageModel, OpenAiAudioSpeechModel openAiAudioSpeechModel, OpenAiAudioTranscriptionModel openAiAudioTranscriptionModel, ChatMemoryRepository chatMemoryRepository, ChatRepository chatRepository) {
         this.openAiChatModel = openAiChatModel;
         this.chatMemoryRepository = chatMemoryRepository;
+        this.chatRepository = chatRepository;
     }
 
     // chatmodel : response
@@ -58,6 +63,12 @@ public class OpenAIService {
         // 유저&페이지별 ChatMemory를 관리하기 위한 Key (우선 명시적)
         String userId = "gud0217" + "_" + "1";
 
+        // 전체 대화 저장용
+        ChatEntity chatUserEntity = new ChatEntity();
+        chatUserEntity.setUserId(userId);
+        chatUserEntity.setType(MessageType.USER);
+        chatUserEntity.setContent(text);
+
         // 메시지
         ChatMemory chatMemory = MessageWindowChatMemory.builder()
                 .maxMessages(10)
@@ -85,8 +96,17 @@ public class OpenAIService {
                     return token;
                 })
                 .doOnComplete(() -> {
+
                     chatMemory.add(userId, new AssistantMessage(responseBuffer.toString()));
                     chatMemoryRepository.saveAll(userId, chatMemory.get(userId));
+
+                    // 전체 대화 저장용
+                    ChatEntity chatAssistantEntity = new ChatEntity();
+                    chatAssistantEntity.setUserId(userId);
+                    chatAssistantEntity.setType(MessageType.ASSISTANT);
+                    chatAssistantEntity.setContent(responseBuffer.toString());
+
+                    chatRepository.saveAll(List.of(chatUserEntity, chatAssistantEntity));
                 });
     }
 }
