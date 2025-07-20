@@ -29,7 +29,7 @@ public class ChatController {
 
     @ResponseBody
     @PostMapping("/chat")
-    public CityResponseDTO chat(@RequestBody Map<String, String> body) {
+    public String chat(@RequestBody Map<String, String> body) {
         return openAIService.generate(body.get("text"));
     }
 

@@ -1,8 +1,7 @@
 package com.example.springai.domain.openai.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.ai.chat.messages.MessageType;
 

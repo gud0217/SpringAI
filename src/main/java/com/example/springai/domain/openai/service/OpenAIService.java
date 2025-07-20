@@ -56,7 +56,7 @@ public class OpenAIService {
         // 요청 및 응답
         return chatClient.prompt(prompt)
                 .call()
-                .entity(CityResponseDTO.class);
+                .content();
     }
 
 
