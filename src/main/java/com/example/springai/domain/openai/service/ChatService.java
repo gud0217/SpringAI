@@ -1,7 +1,7 @@
 package com.example.springai.domain.openai.service;
 
-import com.example.springai.entity.ChatEntity;
-import com.example.springai.repository.ChatRepository;
+import com.example.springai.domain.openai.entity.ChatEntity;
+import com.example.springai.domain.openai.repository.ChatRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

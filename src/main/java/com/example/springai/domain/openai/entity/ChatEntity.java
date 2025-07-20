@@ -1,4 +1,4 @@
-package com.example.springai.entity;
+package com.example.springai.domain.openai.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

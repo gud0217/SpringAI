@@ -1,8 +1,8 @@
 package com.example.springai.domain.openai.service;
 
 import com.example.springai.domain.openai.dto.CityResponseDTO;
-import com.example.springai.entity.ChatEntity;
-import com.example.springai.repository.ChatRepository;
+import com.example.springai.domain.openai.entity.ChatEntity;
+import com.example.springai.domain.openai.repository.ChatRepository;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
@@ -11,7 +11,6 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.*;
 import org.springframework.stereotype.Service;
@@ -99,6 +98,7 @@ public class OpenAIService {
 
         // 요청 및 응답
         return chatClient.prompt(prompt)
+                .tools(new ChatTools())
                 .stream()
                 .content()
                 .map(token -> {
@@ -118,7 +118,6 @@ public class OpenAIService {
 
                     chatRepository.saveAll(List.of(chatUserEntity, chatAssistantEntity));
                 });
-
 
 //        return openAiChatModel.stream(prompt)
 //                .mapNotNull(response -> {

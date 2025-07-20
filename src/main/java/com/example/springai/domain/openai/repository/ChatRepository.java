@@ -1,6 +1,6 @@
-package com.example.springai.repository;
+package com.example.springai.domain.openai.repository;
 
-import com.example.springai.entity.ChatEntity;
+import com.example.springai.domain.openai.entity.ChatEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

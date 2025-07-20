@@ -1,4 +1,4 @@
-package com.example.springai.config;
+package com.example.springai.global.config;
 
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;

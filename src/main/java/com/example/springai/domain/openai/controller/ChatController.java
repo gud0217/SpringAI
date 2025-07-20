@@ -1,10 +1,9 @@
-package com.example.springai.controller;
+package com.example.springai.domain.openai.controller;
 
 import com.example.springai.domain.openai.dto.CityResponseDTO;
 import com.example.springai.domain.openai.service.ChatService;
 import com.example.springai.domain.openai.service.OpenAIService;
-import com.example.springai.entity.ChatEntity;
-import org.hibernate.annotations.Parameter;
+import com.example.springai.domain.openai.entity.ChatEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
